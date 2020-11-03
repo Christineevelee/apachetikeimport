@@ -1,0 +1,60 @@
+import mysql.connector
+import mysql.connector
+from mysql.connector import Error
+from tika import parser
+from multiprocessing import Pool
+
+file = 'c:/policiesandprocedures.pdf'
+#file = 'c:/TestPDF.pdf'
+# Parse data from file
+file_data = parser.from_file(file)
+# Get files text content
+text = file_data['content']
+print(text)
+
+try:
+    def tika_parser(file_path):
+    # Extract text from document
+      content = parser.from_file(file_path)    
+      text = content['content']
+   
+    # Convert to string
+    text = str(text)
+    # Ensure text is utf-8 formatted
+    safe_text = text.encode('utf-8', errors='ignore')
+    # Escape any \ issues
+    safe_text = str(safe_text).replace('\\', ' ').replace('"', ' ')
+    safe_text = str(safe_text).replace('n n', ' ').replace('n', 'n')
+   
+    connection = mysql.connector.connect(host='Laptop-P4FVLFPQ',
+                                         database='tika',
+                                         user='DST2',
+                                         password= '1234!@#$qwerQWER')
+    cursor = connection.cursor()
+
+    print("Before updating a record ")
+    sql_select_query = """select * from tika.testtable"""
+    cursor.execute(sql_select_query)
+    record = cursor.fetchone()
+    print(record)
+
+    # Update single record now
+    # update_query = """Update tika.sparktest set testdata = 800 where idtest =1"""
+    update_query = f'UPDATE tika.testtable SET testdata = "{safe_text}" WHERE testid =1;'
+    
+    cursor.execute(update_query)
+    connection.commit()
+    print("Record Updated successfully ")
+
+    print("After updating record ")
+    cursor.execute(update_query)
+    record = cursor.fetchone()
+    print(record)
+
+except mysql.connector.Error as error:
+    print("Failed to update table record: {}".format(error))
+finally:
+    if (connection.is_connected()):
+        connection.close()
+        print("MySQL connection is closed")
+
