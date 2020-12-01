@@ -1,0 +1,20 @@
+import mysql.connector
+from mysql.connector import Error
+from tika import parser
+from multiprocessing import Pool
+
+parse_pdf = parser.from_file("c:/TestPDF.pdf")
+#data = parse_pdf['content']
+#print(parse_pdf)
+#print(type(parse_pdf['metadata']))
+#print(parse_pdf.keys())
+print("Key and Values: ")
+for key, value in parse_pdf.items():
+    (key, value)
+key, val = next(iter(parse_pdf.items())) 
+thisdict = key, val
+print(thisdict)
+  
+# printing result  
+#print("The 1st key of dictionary is : " + str(key)) 
+#print("The 1st value of dictionary is : " + str(val)) 
