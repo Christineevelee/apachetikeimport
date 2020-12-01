@@ -4,18 +4,24 @@ from tika import parser
 from multiprocessing import Pool
 
 #SET the RECORD ID Here:
-recid = 15
+recid = 5
 
-#SET FILE to UPLOAD HERE:
+#SET FILE to UPLOAD HERE:http://localhost:8889/notebooks/backupTikaTestPy2MySQL.ipynb#
 
-file ='c:/signwithwords.jpg'
+#file ='c:/signwithwords.jpg'
 #file = 'c:/cats.html'
 #file = 'c:/c.pdf'
 #file = 'c:/DST_Test.pptx'
-# nfile = 'c:/policiesandprocedures.pdf'
+#file = 'c:/policiesandprocedures.pdf'
 #file = 'c:/TestPDF.pdf'
+file = 'c:/BEL_MWR_Map_2017_-_lo.pdf'
 # Parse data from file
 file_data = parser.from_file(file)
+
+
+
+### TO DO parse out author and createdate
+### Use Spark bulk reading to pull into this project. 
 
 # Get files text content
 text = file_data['content']
@@ -27,7 +33,7 @@ try:
     def tika_parser(file_path):
     # Extract text from document
       content = parser.from_file(file_path)    
-      text = content['content']
+      #text = content['content']
    
     # Convert to string
     text = str(text)
@@ -37,7 +43,26 @@ try:
     safe_text = str(safe_text).replace('\\', ' ').replace('"', ' ')
     safe_text = str(safe_text).replace('n n', ' ').replace('n', 'n')
     safe_text = str(safe_text).replace('b  ', ' ').replace('n', 'n')
-   
+    
+    
+    print("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
+    print("Key and Values: ")
+    print("  ")
+    for key, value in file_data.items():
+     (key, value)
+    key, val = next(iter(file_data.items())) 
+    
+    #Hold onto this guy to be able to query your blob text
+    #SELECT CONVERT(myvalue USING utf8) FROM tika.testtable;
+    
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    mykey = key
+    print(mykey)
+    myval = str(val)[0:250]
+    print(myval)    
+    #print(safe_val.split( ))
+    
+    
     connection = mysql.connector.connect(host='Laptop-P4FVLFPQ',
                                          database='tika',
                                          user='DST2',
@@ -46,7 +71,7 @@ try:
     #Set the buffered equal to true to keep on trucking. 
     cursor = connection.cursor(buffered=True)
 
-   # print("Before updating a record ")
+    #print("Before updating a record ")
     sql_select_query = """select * from tika.testtable"""
     
     cursor.execute(sql_select_query)
@@ -54,7 +79,6 @@ try:
     print(record)
 
     # Update single record now
-    # update_query = """Update tika.sparktest set testdata = 800 where idtest =1"""
     update_query = f'UPDATE tika.testtable SET testdatafilepath = "{file}" WHERE testid ="{recid}";'
     
     cursor.execute(update_query)
@@ -66,6 +90,18 @@ try:
     cursor.execute(update_query)
     connection.commit()
     print("TestData Updated successfully ")
+    
+    update_query = f'UPDATE tika.testtable SET mykey = "{mykey}" WHERE testid ="{recid}";'
+    
+    cursor.execute(update_query)
+    connection.commit()
+    print("TestData KEY Updated successfully ")
+    
+    update_query = f'UPDATE tika.testtable SET myvalue = "{myval}" WHERE testid ="{recid}";'
+    
+    cursor.execute(update_query)
+    connection.commit()
+    print("TestData MyValue Updated successfully ")
 
     print("After updating record ")
     cursor.execute(update_query)
