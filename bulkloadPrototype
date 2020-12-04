@@ -1,0 +1,81 @@
+import os
+from tika import parser
+import mysql.connector
+from mysql.connector import Error
+from tika import parser
+from multiprocessing import Pool
+
+
+#
+# Build Dependencies
+#
+
+onepdf='c:/TestPDF.pdf'
+data_home = 'c:/pdfs'
+file_data = [f for f in os.listdir(data_home)]
+myList = file_data
+
+
+#
+#Create Function
+#
+
+def tika_parser(input):  
+   #Extract text from document
+   content = parser.from_file(input)   
+   print(input)
+   text = content['content']
+   
+   #Convert to string
+   text = str(text)
+   # Ensure text is utf-8 formatted
+   safe_text = text.encode('utf-8', errors='ignore')
+   # Escape any \ issues
+   safe_text = str(safe_text).replace('\\', ' ').replace('"', ' ')
+   safe_text = str(safe_text).replace('n n', ' ').replace('n', 'n')
+   safe_text = str(safe_text).replace('b  ', ' ').replace('n', 'n')
+
+   connection = mysql.connector.connect(host='Laptop-P4FVLFPQ',
+                                       database='tika',
+                                       user='DST2',
+                                       password= '1234!@#$qwerQWER')
+                                       
+   print('Connection')
+
+   #Set the buffered equal to true to keep on trucking. 
+   cursor = connection.cursor(buffered=True)
+
+   print('cursor')
+   # print("Before updating a record ")
+   sql_select_query = """select * from tika.importtika"""
+   cursor.execute(sql_select_query)
+   record = cursor.fetchone()
+
+   # Insert a single record now
+   insert_query = f'INSERT INTO tika.importtika ( testdatafilepath, testdata) values ( "  {data_home}  ", "  {safe_text}  ")'; 
+
+   cursor.execute(insert_query)
+   connection.commit()  
+   
+   print("After inserting record ")  
+   record = cursor.fetchone()
+   print(record)
+
+   cursor.close()
+   connection.close()
+
+
+#
+#Execute Functon
+#
+
+#tika_parser(onepdf)
+#tika_parser(onepdf)
+#pool = Pool()
+#pool.map(tika_parser, data_home)
+
+for x in myList:
+   files = x
+   files=data_home+"/"+files
+   tika_parser(files)
+print(files)   
