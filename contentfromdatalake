@@ -1,0 +1,40 @@
+import os
+from tika import parser
+from multiprocessing import Pool
+#
+# Build Dependencies
+#
+# datalake becomes S3/bucketIn
+# datalake becomes S3/bucketOut
+dataLake = 'c:/S3/bucketIn/'
+listOfFileNames = [f for f in os.listdir(dataLake)]
+listOfFilePaths = [dataLake + file for file in listOfFileNames]
+
+
+
+#
+#Create Function
+# 
+def tika_parser(input):
+   #Extract text from document
+   content = parser.from_file(input)
+   text = content['content']
+   #Convert to string
+   text = str(text)
+   text = text + "\n\nEnd Record"   
+  
+   # Ensure text is utf-8 formatted
+   safe_text = text.encode('utf-8', errors='ignore') 
+   return safe_text  
+  
+#Execute Functon with Multiprocessing
+#
+if __name__ == '__main__':
+   with Pool(5) as p:
+        print(p.map(tika_parser, listOfFilePaths))
+        #get the data from the datalake and write it to my outfile.
+        data=(p.map(tika_parser, listOfFilePaths))        
+        with open('C:/S3/bucketOut/content.txt', 'w') as data_out:
+           print(data, file=data_out)
+  
+      
