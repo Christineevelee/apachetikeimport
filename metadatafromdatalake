@@ -1,0 +1,46 @@
+import os
+from tika import parser
+from multiprocessing import Pool
+
+#
+# Build Dependencies
+#
+# datalake becomes S3/bucketIn
+# datalake becomes S3/bucketOut
+dataLakein = 'c:/S3/bucketIn/'
+dataLakeout ='C:/S3/bucketOut/metadata.txt'
+listOfFileNames = [f for f in os.listdir(dataLakein)]
+listOfFilePaths = [dataLakein + file for file in listOfFileNames]
+
+#
+#Create Function
+# 
+def tika_parser(input):
+   #Extract metadata text from document
+   content = parser.from_file(input)   
+   text = content['metadata']
+
+   #Convert to string
+   text = str(text)
+   text =text + "\n\nEnd Record"   
+  
+   # Ensure text is utf-8 formatted
+   safe_text = text.encode('utf-8', errors='ignore') 
+   return safe_text  
+  
+#Execute Functon with Multiprocessing
+#
+if __name__ == '__main__':
+   with Pool(5) as p:
+        print(p.map(tika_parser, listOfFilePaths))        
+        #get the data from the datalake and write it to my outfile.
+        #
+        # Place results in S3 bucket out. 
+        #
+        data=(p.map(tika_parser, listOfFilePaths))              
+        with open(dataLakeout, 'w') as data_out:
+           print(data, file=data_out)
+      
+      
+        
+    
