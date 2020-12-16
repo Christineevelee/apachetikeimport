@@ -1,3 +1,4 @@
+DEPROCATED
 import mysql.connector
 from mysql.connector import Error
 from tika import parser
