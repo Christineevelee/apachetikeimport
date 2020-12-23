@@ -1,0 +1,127 @@
+import os
+from tika import parser
+from multiprocessing import Pool
+import json
+import re
+
+#
+# Build Dependencies
+#
+# datalake becomes S3/bucketIn
+# datalake becomes S3/bucketOut
+dataLakein      =  'e:/S3/bucketIn/'
+metatext        =  'e:/S3/bucketOut/metadata.txt'
+contentext      =  'e:/S3/bucketOut/contentdata.txt'
+listOfFileNames =  [f for f in os.listdir(dataLakein)]
+listOfFilePaths =  [dataLakein + file for file in listOfFileNames]
+
+#
+#Create Function
+#
+def tika_metaparser(input):
+   #Extract metadata text from document
+   content = parser.from_file(input)  
+   metatext = content['metadata']
+
+   #Convert to string
+   metatext = str(metatext)  
+ 
+   # Ensure text is utf-8 formatted
+   safe_text = metatext.encode('utf-8', errors='ignore')  
+   safe_text = re.findall('[:a-zA-Z0-9_\s]+', str(safe_text))
+   
+   #must remove ', '
+   pattern = r', '
+   safe_text = re.sub(pattern, '' , str(safe_text))    
+     
+   pattern = r"': '"
+   safe_text = re.sub(pattern,  " : " , str(safe_text))
+   
+   pattern = r": ' ''"
+   safe_text = re.sub(pattern,  " : ' " , str(safe_text))
+   
+   pattern = r"'' '"
+   safe_text = re.sub(pattern,  "','" , str(safe_text))
+   
+   pattern = r"''"
+   safe_text = re.sub(pattern,  " " , str(safe_text))
+   
+   
+ 
+   return safe_text  
+
+def tika_contentparser(input):
+   content = parser.from_file(input)  
+   contenttext = content['content']
+
+   #Convert to string
+   contenttext = str(contenttext)  
+ 
+   # Ensure text is utf-8 formatted
+   safe_text = contenttext.encode('utf-8', errors='ignore')
+   
+   safe_text = re.findall('[:a-zA-Z0-9_\s]+', str(safe_text))
+    #must remove ', '
+   
+   pattern = r' n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n nP'
+   safe_text = re.sub(pattern, '' , str(safe_text))    
+   
+   pattern = r', '
+   safe_text = re.sub(pattern, '' , str(safe_text))    
+     
+   pattern = r"': '"
+   safe_text = re.sub(pattern,  " : " , str(safe_text))
+   
+   pattern = r": ' ''"
+   safe_text = re.sub(pattern,  " : ' " , str(safe_text))
+   
+   pattern = r"'' '"
+   safe_text = re.sub(pattern,  "','" , str(safe_text))
+   
+   pattern = r"''"
+   safe_text = re.sub(pattern,  " " , str(safe_text))
+   
+   
+   
+   
+   return safe_text  
+
+def tika_jsonconverter(metatext):
+    filetoconvert = (metatext)
+    dict1 = {}    
+    with open(filetoconvert) as fh:
+        for line in fh:
+            # reads each line and trims of extra the spaces  
+            # and gives only the valid words
+            command, description = line.strip().split(None, 1)        
+            dict1[command] = description.strip()
+        # creating json file
+   # the JSON file is named as test1
+    out_file = open("e:/S3/bucketOut/metaout.json", "w")
+    json.dump(dict1, out_file, indent = 4, sort_keys = False)
+    out_file.close()
+       
+ 
+ 
+#Execute Functon with Multiprocessing
+#  
+if __name__ == '__main__':
+   with Pool(5) as p:
+        print(p.map(tika_metaparser, listOfFilePaths))        
+        #get the data from the datalake and write it to my outfile.
+        #
+        # Place results in S3 bucket out.
+        #
+        data=(p.map(tika_metaparser, listOfFilePaths))              
+        with open(metatext, 'w') as data_out:
+           print(data, file=data_out)
+           
+        datatxt=(p.map(tika_contentparser, listOfFilePaths))              
+        with open(contentext, 'w') as datatxt_out:
+           print(datatxt, file=datatxt_out)          
+       
+        datatxt=(p.map(tika_contentparser, listOfFilePaths))              
+        with open(contentext, 'w') as datatxt_out:
+           print(datatxt, file=datatxt_out)          
+       
+   tika_jsonconverter(metatext)
