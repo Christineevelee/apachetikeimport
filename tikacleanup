@@ -9,14 +9,16 @@ import re
 #
 # datalake becomes S3/bucketIn
 # datalake becomes S3/bucketOut
-dataLakein      =  'e:/S3/bucketIn/'
-metatext        =  'e:/S3/bucketOut/metadata.txt'
-contentext      =  'e:/S3/bucketOut/contentdata.txt'
+# Make sure your directory matches the directories below.
+dataLakein      =  'c:/S3/bucketIn/'
+metatext        =  'c:/S3/bucketOut/metadata.txt'
+contentext      =  'c:/S3/bucketOut/contentdata.txt'
+jsonout         =  'c:/S3/bucketOut/metaout.json'
 listOfFileNames =  [f for f in os.listdir(dataLakein)]
 listOfFilePaths =  [dataLakein + file for file in listOfFileNames]
 
 #
-#Create Function
+#This code retrieves the code and cleans for METADATA
 #
 def tika_metaparser(input):
    #Extract metadata text from document
@@ -30,7 +32,7 @@ def tika_metaparser(input):
    safe_text = metatext.encode('utf-8', errors='ignore')  
    safe_text = re.findall('[:a-zA-Z0-9_\s]+', str(safe_text))
    
-   #must remove ', '
+   #Begin cleaning the text. This is clunky can be cleaned up.
    pattern = r', '
    safe_text = re.sub(pattern, '' , str(safe_text))    
      
@@ -46,10 +48,11 @@ def tika_metaparser(input):
    pattern = r"''"
    safe_text = re.sub(pattern,  " " , str(safe_text))
    
-   
- 
    return safe_text  
 
+#
+#This retrieves the code and cleans it for CONTENT.
+#
 def tika_contentparser(input):
    content = parser.from_file(input)  
    contenttext = content['content']
@@ -58,10 +61,10 @@ def tika_contentparser(input):
    contenttext = str(contenttext)  
  
    # Ensure text is utf-8 formatted
-   safe_text = contenttext.encode('utf-8', errors='ignore')
-   
+   safe_text = contenttext.encode('utf-8', errors='ignore')   
    safe_text = re.findall('[:a-zA-Z0-9_\s]+', str(safe_text))
-    #must remove ', '
+   
+   #Begin cleaning the text. This is clunky can be cleaned up. 
    
    pattern = r' n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n n nP'
    safe_text = re.sub(pattern, '' , str(safe_text))    
@@ -81,9 +84,6 @@ def tika_contentparser(input):
    pattern = r"''"
    safe_text = re.sub(pattern,  " " , str(safe_text))
    
-   
-   
-   
    return safe_text  
 
 def tika_jsonconverter(metatext):
@@ -97,11 +97,10 @@ def tika_jsonconverter(metatext):
             dict1[command] = description.strip()
         # creating json file
    # the JSON file is named as test1
-    out_file = open("e:/S3/bucketOut/metaout.json", "w")
+    out_file = open(jsonout, "w")
     json.dump(dict1, out_file, indent = 4, sort_keys = False)
     out_file.close()
        
- 
  
 #Execute Functon with Multiprocessing
 #  
