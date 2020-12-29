@@ -1,0 +1,45 @@
+import os
+from tika import parser
+from multiprocessing import Pool
+import json
+
+#
+# Build Dependencies
+# NOTE: Change dataLakeOut to S3 Bucket In path
+# NOTE: Change dataLakeOut to S3 Bucket In path
+#
+dataLakeIn      =  'C:/Users/dst1/Documents/ARSOFNetwork/datalakein/'
+dataLakeOut     =  'C:/Users/dst1/Documents/ARSOFNetwork/datalakeout/'
+jsonout         =  dataLakeOut + 'textextract.json'
+listOfFileNames =  [f for f in os.listdir(dataLakeIn)]
+listOfFilePaths =  [dataLakeIn + file for file in listOfFileNames]
+
+#
+#Build Function to Extract Text Data and Metadata
+#
+
+def tika_metaparser(input):
+
+    #read in tika extracted text and metadata
+    content = parser.from_file(input)
+
+    #restructure meta data and into dictionary
+    text = content['metadata']
+    #this line does some heavy lifting: 
+    #    ->It encodes the extracted text into utf-8 format 
+    #    ->recasts it to a string
+    #    ->appends it as the final key value pair in the dictionary
+    text['content'] = str(content['content'].encode('utf-8', errors='ignore'))
+    return text  
+       
+# 
+#Execute Functon with Multiprocessing and write to .json file
+#
+
+if __name__ == '__main__':
+   with Pool(5) as p:
+        #create list of dictionaries (one dictionary per file)
+        data=(p.map(tika_metaparser, listOfFilePaths)) 
+        #Write list of dictionaries to JSON
+        with open(jsonout, 'w') as data_out:
+           json.dump(data, data_out)
